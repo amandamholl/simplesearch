@@ -30,7 +30,8 @@ String.prototype.capitalize = function() {
 //when the searchbox is typed- do this
   $('#searchbox').keyup(function() {
     if ($(this).val().length > 3) {
-      $('div[offset="0"]').loadSolrResults($(this).val(), Handlebars.compile($("#hit-template").html()), Handlebars.compile($("#result-summary-template").html()), 0);
+      //$('div[offset="0"]').loadSolrResults($(this).val(), Handlebars.compile($("#hit-template").html()), Handlebars.compile($("#result-summary-template").html()), 0);
+      
     }
     else {
       $('#rs').css({ opacity: 0.5 });
@@ -65,6 +66,18 @@ String.prototype.capitalize = function() {
     window.sessionStorage.setItem("queries", JSON.stringify(queries));
     console.log(queries);
 
+    if(window.sessionStorage.getItem("totalClicks")===null){
+      window.sessionStorage.setItem("totalClicks",1);
+    }
+    else {
+      window.sessionStorage.setItem("totalClicks",parseInt(window.sessionStorage.getItem("totalClicks"))+1);
+    }
+  });
+
+  $('#start').on('click', function(){
+    if(window.sessionStorage.getItem("start")===null){
+      window.sessionStorage.setItem("start",Date());
+    }
   });
 
   $("#searchbox").keyup(function(event){
@@ -102,21 +115,22 @@ String.prototype.capitalize = function() {
   $("#end").click(function(){
     window.sessionStorage.setItem("end",Date());
     console.log(window.sessionStorage);
+    
+    // Build nice looking session object
+    var sessionLog = new Object();
+    sessionLog.startedAt = window.sessionStorage.getItem("start");
+    sessionLog.endedAt = window.sessionStorage.getItem("end");
+    sessionLog.duration = ((new Date(sessionLog.endedAt)).getTime() - (new Date(sessionLog.startedAt)).getTime())/1000;
+    sessionLog.queries = JSON.parse(window.sessionStorage.getItem("queries"));
+    sessionLog.totalClicks = window.sessionStorage.getItem("totalClicks");
+    sessionLog.totalQueries = window.sessionStorage.getItem("totalQueries");
+
     //begin building session data to log
-    var url = 'data:text/json;charset=utf8,' + encodeURIComponent(JSON.stringify(window.sessionStorage));
+    var url = 'data:text/json;charset=utf8,' + encodeURIComponent(JSON.stringify(sessionLog));
+  
     window.open(url, '_blank');
     window.focus();
     window.sessionStorage.clear();
-  });
-
-  $('.cover #searchbox').keyup(function() {
-    if ($(this).val().length > 3) {
-      $('body').addClass("padding");
-      $('div[offset="0"]').loadSolrResults($(this).val(), Handlebars.compile($("#result-template").html()),Handlebars.compile($("#hit-template").html()), Handlebars.compile($("#result-summary-template").html()), 0);
-    }
-    else {
-      $('#rs').css({ opacity: 0.5 });
-    }
   });
 
   //jquery plugin allows resultsets to be painted onto any div.
@@ -225,6 +239,9 @@ String.prototype.capitalize = function() {
             rs.parent().append(nextDiv);
             $(nextDiv).loadSolrResultsWhenVisible(q, hitTemplate, summaryTemplate, +HITSPERPAGE+offset);
           }
+        }
+        else{
+          rs.append("<p> No results found. Please try another query. </p>.");
         }
       },
       error: function(result) { console.log("Error"); },
