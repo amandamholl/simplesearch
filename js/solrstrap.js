@@ -168,8 +168,11 @@ String.prototype.capitalize = function() {
       var rs = this;
       console.log('here');
       $(rs).parent().css({ opacity: 0.5 });
+      //make sure query is escaped so solr doesn't throw error (like with .find() or c++)
+      var specials = ['+', '-', '&', '!', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', ':', '\\'];
+      var regexp = new RegExp("(\\" + specials.join("|\\") + ")", "g");
       $.ajax({
-        url : 'http://localhost:8983/solr/files/select?q='+q+'&wt=json&facet=true&facet.query=php&facet.query=ruby&facet.query=jquery&facet.query=css&facet.query=javascript&facet.query=java&facet.query=c&facet.query=python&facet.query=interview&facet.query=homework&facet.query=examples&facet.query=tutorial&facet.query=reference',
+        url : 'http://localhost:8983/solr/files/select?q='+(q.replace(regexp, "\\$1"))+'&wt=json&facet=true&facet.query=php&facet.query=ruby&facet.query=jquery&facet.query=css&facet.query=javascript&facet.query=java&facet.query=c&facet.query=python&facet.query=interview&facet.query=homework&facet.query=examples&facet.query=tutorial&facet.query=reference',
         type: "GET",
         dataType: "jsonp",
         jsonp : 'json.wrf',
